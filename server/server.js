@@ -101,7 +101,7 @@ app.patch('/todos/:id', (req, res) => {
 
   Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
     if (!todo) {
-      return res.send(404).send();
+      return res.sendStatus(404);
     }
 
     res.send({todo});

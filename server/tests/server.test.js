@@ -10,7 +10,9 @@ const todos = [{
   text: 'First test todo'
 }, {
   _id: new ObjectID(),
-  text: 'Second test todo'
+  text: 'Second test todo',
+  completed: true,
+  completedAt: 333
 }];
 
 beforeEach((done) => {
@@ -147,3 +149,71 @@ describe('DELETE /todos/:id', () => {
       .end(done);
   });
 });
+
+describe('PATCH /todos/:id', () => {
+
+  // CHALLENGE
+  // grab id of first item
+  // update text, set completed=true
+  // 200
+  // text is changed, completed is true, completedAt is a number (.toBeA)
+  it('should update the todo', (done) => {
+    let hexId = todos[0]._id.toHexString();;
+    let todo = {
+      text: "new text",
+      completed: true
+    }
+
+    request(app)
+      .patch(`/todos/${hexId}`)
+      .send(todo)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo.text).toBe(todo.text);
+        expect(res.body.todo.completed).toBe(true);
+        expect(res.body.todo.completedAt).toBeA('number');
+      })
+      .end(done);
+  });
+
+  // CHALLENGE
+  // grab id of second todo item
+  // update text, set completed=false
+  // 200
+  // text is changed, completed is false, completedAt is null (.toNotExist)
+  it('should clear completedAt when todo is not completed', (done) => {
+    let hexId = todos[1]._id.toHexString();
+    let text = "uncompleted todo";
+
+    request(app)
+      .patch(`/todos/${hexId}`)
+      .send({
+          text,
+          completed: false
+        })
+      .expect(200)
+      .expect((res) => {
+        let bodyTodo = res.body.todo;
+        expect(bodyTodo.text).toBe(text);
+        expect(bodyTodo.completed).toBe(false);
+        expect(bodyTodo.completedAt).toNotExist();
+      })
+      .end(done);
+  });
+
+  it('should return 404 if todo not found', (done) => {
+    let hexId = new ObjectID().toHexString();
+    request(app)
+      .patch(`/todos/${hexId}`)
+      .expect(404)
+      .end(done);
+  });
+
+  it('should return 404 if ObjectID is invalid', (done) => {
+    request(app)
+      .patch('/todos/123abc')
+      .expect(404)
+      .end(done);
+  });
+
+})
